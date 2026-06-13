@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SourdoughLog — Starter &amp; Bake Log for Home Bakers</title>
+<meta name="description" content="A private, offline sourdough starter and bake log. Track starter feedings, get fed-time reminders, log bakes with hydration, bulk &amp; proof times, and rate your crumb. Free, no account, runs in your browser.">
+<meta name="theme-color" content="#1c160f">
+<link rel="canonical" href="https://alexeysamosadov.github.io/sourdoughlog/">
+<meta property="og:title" content="SourdoughLog — Sourdough Starter &amp; Bake Log">
+<meta property="og:description" content="Track starter feedings &amp; bakes. Hydration helper, fed-time reminders, crumb ratings. Free, private, offline.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://alexeysamosadov.github.io/sourdoughlog/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%9E%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#1c160f; --bg2:#241d14; --card:#2b2218; --card2:#332819;
+    --line:#3d3122; --ink:#f3e9d8; --muted:#b9a888; --faint:#8a7a5e;
+    --crust:#d99343; --crust2:#e8b15f; --crumb:#f0e6cf; --ok:#7fb069; --warn:#e0a83e; --bad:#d2705a;
+    --accent:#d99343; --accentink:#1c160f;
+    --radius:14px; --shadow:0 8px 28px rgba(0,0,0,.35);
+    font-synthesis:none;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1100px 600px at 80% -10%, #2a2114 0%, transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, #261d12 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5; -webkit-text-size-adjust:100%;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  a{color:var(--crust2)}
+  .wrap{max-width:780px;margin:0 auto;padding:18px 16px 80px}
+  header.top{display:flex;align-items:center;gap:12px;padding:8px 2px 14px}
+  .logo{font-size:30px;line-height:1}
+  .brand h1{font-size:21px;margin:0;letter-spacing:.2px}
+  .brand p{margin:1px 0 0;font-size:12.5px;color:var(--muted)}
+  .spacer{flex:1}
+  .pill{font-size:11px;border:1px solid var(--line);color:var(--muted);padding:4px 9px;border-radius:999px;background:var(--card)}
+  .pill.pro{border-color:var(--crust);color:var(--crust2)}
+  .btnPro{cursor:pointer;border:1px solid var(--crust);background:linear-gradient(180deg,var(--crust2),var(--crust));color:var(--accentink);font-weight:700;font-size:12.5px;padding:6px 12px;border-radius:999px}
+
+  .tabs{display:flex;gap:8px;margin:6px 0 16px;position:sticky;top:0;background:linear-gradient(180deg,var(--bg) 70%,transparent);padding:8px 0;z-index:5}
+  .tab{flex:1;cursor:pointer;text-align:center;padding:11px 8px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-weight:600;font-size:14px;user-select:none}
+  .tab.on{background:linear-gradient(180deg,var(--card2),var(--card));color:var(--ink);border-color:var(--crust);box-shadow:inset 0 0 0 1px rgba(217,147,67,.18)}
+  .tab small{display:block;font-weight:400;font-size:10.5px;color:var(--faint);margin-top:2px}
+
+  .card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin:0 0 16px;box-shadow:var(--shadow)}
+  .card h2{margin:0 0 4px;font-size:16px}
+  .card .sub{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+  .status{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .statusBig{font-size:26px;font-weight:700}
+  .statusBig.due{color:var(--warn)}
+  .statusBig.ok{color:var(--ok)}
+  .chip{font-size:12px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg2);color:var(--muted)}
+  .chip.due{border-color:var(--warn);color:var(--warn)}
+  .chip.ok{border-color:var(--ok);color:var(--ok)}
+
+  label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px}
+  input,select,textarea{
+    width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--ink);
+    border-radius:10px;padding:10px 11px;font-size:15px;font-family:inherit;outline:none;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--crust)}
+  textarea{resize:vertical;min-height:46px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .field{margin:0 0 10px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  @media(max-width:520px){.grid3{grid-template-columns:1fr 1fr}}
+
+  .btn{cursor:pointer;border:1px solid var(--line);background:var(--card2);color:var(--ink);font-weight:600;font-size:14px;padding:10px 14px;border-radius:10px}
+  .btn:hover{border-color:var(--crust)}
+  .btn.primary{background:linear-gradient(180deg,var(--crust2),var(--crust));color:var(--accentink);border-color:var(--crust)}
+  .btn.ghost{background:transparent}
+  .btn.sm{padding:6px 10px;font-size:12.5px}
+  .btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+
+  .hist{list-style:none;margin:0;padding:0}
+  .item{border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin:0 0 9px;background:var(--bg2)}
+  .item .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .item .when{font-weight:600;font-size:14px}
+  .item .ago{font-size:11.5px;color:var(--faint)}
+  .item .meta{font-size:12.5px;color:var(--muted);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap}
+  .item .meta b{color:var(--ink);font-weight:600}
+  .item .notes{font-size:12.5px;color:var(--muted);margin-top:5px;white-space:pre-wrap}
+  .item .x{cursor:pointer;color:var(--faint);font-size:12px;border:none;background:none;padding:2px 4px}
+  .item .x:hover{color:var(--bad)}
+  .stars{color:var(--crust2);letter-spacing:1px;font-size:14px}
+  .empty{color:var(--faint);font-size:13px;text-align:center;padding:18px 0}
+
+  .helper .out{font-size:24px;font-weight:700;color:var(--crust2);margin-top:4px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:10px}
+  .seg button{background:var(--bg2);color:var(--muted);border:none;padding:8px 13px;font-size:13px;cursor:pointer;font-family:inherit}
+  .seg button.on{background:var(--crust);color:var(--accentink);font-weight:700}
+
+  .locked{position:relative}
+  .lockTag{font-size:10.5px;border:1px solid var(--crust);color:var(--crust2);border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:middle}
+  .proGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:520px){.proGrid{grid-template-columns:1fr}}
+  .stat{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .stat .n{font-size:22px;font-weight:700}
+  .stat .l{font-size:11.5px;color:var(--muted)}
+  .tl{list-style:none;margin:8px 0 0;padding:0}
+  .tl li{display:flex;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line)}
+  .tl li:last-child{border-bottom:none}
+  .tl .t{font-variant-numeric:tabular-nums;color:var(--crust2);font-weight:600;min-width:74px}
+  .tl .e{color:var(--ink)}
+
+  footer{color:var(--faint);font-size:12px;text-align:center;margin-top:18px;line-height:1.7}
+  footer a{color:var(--muted)}
+  .muted{color:var(--muted)} .small{font-size:12px}
+
+  /* modal */
+  .bg{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .modal{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--crust);border-radius:16px;max-width:430px;width:100%;padding:20px;box-shadow:var(--shadow);max-height:92vh;overflow:auto}
+  .modal h3{margin:0 0 2px;font-size:18px}
+  .modal ul{margin:10px 0;padding-left:18px;color:var(--muted);font-size:13.5px}
+  .modal ul li{margin:3px 0}
+  .walletBox{display:flex;gap:8px;margin:8px 0}
+  .walletBox input{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+  .err{color:var(--bad);font-size:13px;min-height:18px;margin-top:6px}
+  .ok{color:var(--ok);font-size:13px;min-height:18px;margin-top:6px}
+  details{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+  summary{cursor:pointer;color:var(--muted);font-size:13px}
+  .close{position:absolute}
+  .modal .x2{float:right;cursor:pointer;color:var(--faint);background:none;border:none;font-size:18px;margin:-6px -4px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">🍞</div>
+    <div class="brand">
+      <h1>SourdoughLog</h1>
+      <p>Your starter &amp; bakes — private, offline, yours.</p>
+    </div>
+    <div class="spacer"></div>
+    <span id="proPill" class="pill" style="display:none"></span>
+    <button id="proBtn" class="btnPro" onclick="openLicense()">Pro</button>
+  </header>
+
+  <div class="tabs">
+    <div class="tab on" id="tabStarter" onclick="setTab('starter')">🫧 Starter<small>feed &amp; track</small></div>
+    <div class="tab" id="tabBakes" onclick="setTab('bakes')">🥖 Bakes<small>log &amp; rate</small></div>
+  </div>
+
+  <div id="view"></div>
+
+  <footer>
+    100% private — everything stays in your browser (localStorage). No account, works offline.<br>
+    <a href="./sourdough-starter-log.html">Starter log guide</a> ·
+    <a href="./sourdough-bake-log-app.html">Bake log guide</a> ·
+    <span id="dataLine"></span>
+  </footer>
+</div>
+
+<script>
+/* ============================ LICENSING ============================ */
+const PUBLIC_JWK = {"kty":"EC","x":"oKTLddYoVtSAYr4jQbX3o2kaErRAoiXQwgBQ2FVUzmw","y":"Y3_HsYN72zbp3VmYXBppkOw9-HhQ97IPUQP82zq523w","crv":"P-256"};
+const PAY = { wallet:"0xe339997037C7e1C81829fA3e110d3e82B4bDd48E", chain:"Base", token:"USDC", price:"9", contact:"https://github.com/AlexeySamosadov/sourdoughlog/issues/new" };
+let pro=false;
+
+function fromB(s){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";const b=atob(s);const a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a;}
+async function verifyLicense(str){try{const[p,sg]=str.trim().split(".");if(!p||!sg)return null;const k=await crypto.subtle.importKey("jwk",PUBLIC_JWK,{name:"ECDSA",namedCurve:"P-256"},false,["verify"]);if(!await crypto.subtle.verify({name:"ECDSA",hash:"SHA-256"},k,fromB(sg),fromB(p)))return null;const pl=JSON.parse(new TextDecoder().decode(fromB(p)));if(pl.exp&&Math.floor(Date.now()/1000)>pl.exp)return{expired:true};return pl;}catch(e){return null;}}
+async function applyLicense(str,silent){const pl=await verifyLicense(str);if(pl&&!pl.expired&&pl.plan==="pro"){pro=true;localStorage.setItem("sourdoughlog_license",str);if(typeof render==="function")render();if(!silent){const o=document.querySelector("#licOk");if(o)o.textContent="Unlocked — thank you";setTimeout(()=>{const b=document.querySelector("#licBg");if(b)b.remove();},800);}return true;}if(!silent){const e=document.querySelector("#licErr");if(e)e.textContent=pl&&pl.expired?"License expired.":"Invalid key.";}return false;}
+
+function openLicense(){
+  if(document.querySelector("#licBg"))return;
+  const d=document.createElement("div");
+  d.id="licBg"; d.className="bg";
+  d.innerHTML=`<div class="modal">
+    <button class="x2" onclick="document.getElementById('licBg').remove()">✕</button>
+    <h3>SourdoughLog Pro — ${PAY.price} USDC</h3>
+    <div class="muted small">One-time payment · lifetime · works offline</div>
+    <ul>
+      <li>📤 <b>CSV export</b> of every feeding &amp; bake</li>
+      <li>⚖️ <b>Bake comparison</b> — line up your best loaves side by side</li>
+      <li>⏱️ <b>Dough timeline / schedule calculator</b> — plan mix→bake backwards from your oven time</li>
+      <li>📊 <b>Ratings &amp; stats</b> — averages, streaks, what works</li>
+    </ul>
+    <p class="muted small" style="margin:6px 0 2px">Send <b>${PAY.price} ${PAY.token}</b> on <b>${PAY.chain}</b> to:</p>
+    <div class="walletBox">
+      <input id="payW" readonly value="${PAY.wallet}">
+      <button class="btn sm" onclick="navigator.clipboard.writeText(PAY.wallet);this.textContent='Copied'">Copy</button>
+    </div>
+    <div class="field"><label>Your payment tx hash</label><input id="txh" placeholder="0x…"></div>
+    <div class="field"><label>Email (so we can reach you)</label><input id="email" placeholder="you@example.com"></div>
+    <button class="btn primary" style="width:100%" onclick="requestKey()">Get my key →</button>
+    <div id="licErr" class="err"></div><div id="licOk" class="ok"></div>
+    <details>
+      <summary>Have a key? Activate it</summary>
+      <div class="field" style="margin-top:10px"><textarea id="licKey" placeholder="Paste your license key"></textarea></div>
+      <button class="btn" style="width:100%" onclick="applyLicense(document.getElementById('licKey').value,false)">Activate</button>
+    </details>
+    <p class="muted small" style="margin-top:12px;text-align:center">Payment is verified automatically on-chain &amp; your key is posted to the issue — usually within a minute.</p>
+  </div>`;
+  d.addEventListener("click",e=>{if(e.target===d)d.remove();});
+  document.body.appendChild(d);
+}
+function requestKey(){
+  const tx=(document.getElementById("txh").value||"").trim();
+  const em=(document.getElementById("email").value||"").trim();
+  if(!tx){document.getElementById("licErr").textContent="Paste your payment tx hash first.";return;}
+  window.open(PAY.contact+"?title=SourdoughLog%20Pro%20license%20request&body="+encodeURIComponent("Payment tx hash: "+tx+"\nEmail: "+em),"_blank");
+}
+
+/* ============================ STORAGE ============================ */
+const LS={feeds:"sourdoughlog_feeds", bakes:"sourdoughlog_bakes", starter:"sourdoughlog_starter", tab:"sourdoughlog_tab"};
+function load(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;}}
+function save(k,v){localStorage.setItem(k,JSON.stringify(v));}
+let feeds=load(LS.feeds,[]);
+let bakes=load(LS.bakes,[]);
+let starter=load(LS.starter,{name:"My Starter", storage:"room"}); // storage: room|fridge
+let tab=localStorage.getItem(LS.tab)||"starter";
+
+/* ============================ HELPERS ============================ */
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+function nowLocalInput(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);}
+function todayInput(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10);}
+function fmtDateTime(iso){const d=new Date(iso);if(isNaN(d))return iso;return d.toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});}
+function fmtDate(iso){const d=new Date(iso+(iso.length<=10?"T12:00":""));if(isNaN(d))return iso;return d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});}
+function ago(iso){
+  const ms=Date.now()-new Date(iso).getTime();
+  if(ms<0)return "in the future";
+  const h=ms/3.6e6, d=h/24;
+  if(h<1){const m=Math.max(1,Math.round(ms/6e4));return m+" min ago";}
+  if(h<24)return (Math.round(h*10)/10)+" h ago";
+  if(d<14)return (Math.round(d*10)/10)+" days ago";
+  return Math.round(d)+" days ago";
+}
+function hoursSince(iso){return (Date.now()-new Date(iso).getTime())/3.6e6;}
+
+/* feeding-due logic: room temp starters typically want feeding ~12-24h; flag past 24h.
+   fridge starters can rest ~7 days. */
+function dueInfo(){
+  if(!feeds.length)return {state:"none"};
+  const last=feeds[0];
+  const h=hoursSince(last.at);
+  const limit=starter.storage==="fridge"?168:24;
+  const soon =starter.storage==="fridge"?120:12;
+  if(h>=limit)return {state:"due",h,last};
+  if(h>=soon)return {state:"soon",h,last};
+  return {state:"ok",h,last};
+}
+
+/* ============================ RENDER ============================ */
+function setTab(t){tab=t;localStorage.setItem(LS.tab,t);render();}
+
+function render(){
+  document.getElementById("tabStarter").classList.toggle("on",tab==="starter");
+  document.getElementById("tabBakes").classList.toggle("on",tab==="bakes");
+  const pp=document.getElementById("proPill"), pb=document.getElementById("proBtn");
+  if(pro){pp.style.display="";pp.className="pill pro";pp.textContent="✓ Pro";pb.style.display="none";}
+  else{pp.style.display="none";pb.style.display="";}
+  document.getElementById("dataLine").innerHTML=feeds.length+" feedings · "+bakes.length+" bakes";
+  document.getElementById("view").innerHTML = tab==="starter"?starterView():bakesView();
+  if(tab==="starter")wireStarter(); else wireBakes();
+}
+
+/* ---------- STARTER ---------- */
+function starterView(){
+  const di=dueInfo();
+  let statusHTML;
+  if(di.state==="none"){
+    statusHTML=`<div class="empty">No feedings yet — log your first feeding below to start tracking.</div>`;
+  }else{
+    const cls=di.state==="due"?"due":di.state==="soon"?"due":"ok";
+    const big=di.state==="due"?"🍽️ Feed now":di.state==="soon"?"⏰ Feed soon":"✅ Happy";
+    const sub=di.state==="due"
+      ? `Last fed ${ago(di.last.at)} — likely peaked &amp; falling at ${starter.storage==="fridge"?"fridge":"room"} temp.`
+      : di.state==="soon" ? `Last fed ${ago(di.last.at)} — getting hungry.`
+      : `Last fed ${ago(di.last.at)} — still rising / healthy.`;
+    statusHTML=`<div class="status">
+      <div class="statusBig ${cls}">${big}</div>
+      <span class="chip ${cls}">last fed: ${ago(di.last.at)}</span>
+      <span class="chip">${starter.storage==="fridge"?"❄️ fridge":"🌡️ room temp"}</span>
+    </div><p class="sub" style="margin-top:8px">${sub}</p>`;
+  }
+
+  let hist=`<div class="empty">Feeding history will appear here.</div>`;
+  if(feeds.length){
+    hist="<ul class='hist'>"+feeds.map(f=>{
+      const peak=f.peak?`<span>peak rise <b>${esc(f.peak)} h</b></span>`:"";
+      const notes=f.notes?`<div class="notes">${esc(f.notes)}</div>`:"";
+      return `<li class="item"><div class="top"><span class="when">${fmtDateTime(f.at)}</span>
+        <span><span class="ago">${ago(f.at)}</span> <button class="x" onclick="delFeed('${f.id}')" title="delete">✕</button></span></div>
+        <div class="meta"><span><b>${esc(f.flour)||"flour"}</b></span><span>ratio <b>${esc(f.ratio)||"1:1:1"}</b></span>${peak}</div>${notes}</li>`;
+    }).join("")+"</ul>";
+  }
+
+  return `
+  <div class="card">
+    <h2>${esc(starter.name)} <button class="btn sm ghost" style="float:right" onclick="renameStarter()">rename</button></h2>
+    <p class="sub">Storage:
+      <span class="seg" style="margin:0 0 0 4px;vertical-align:middle">
+        <button id="stRoom" class="${starter.storage==='room'?'on':''}" onclick="setStorage('room')">🌡️ Room</button>
+        <button id="stFridge" class="${starter.storage==='fridge'?'on':''}" onclick="setStorage('fridge')">❄️ Fridge</button>
+      </span></p>
+    ${statusHTML}
+  </div>
+
+  <div class="card">
+    <h2>Log a feeding</h2>
+    <p class="sub">When did you feed, and with what?</p>
+    <div class="grid">
+      <div class="field"><label>Date &amp; time</label><input type="datetime-local" id="fAt" value="${nowLocalInput()}"></div>
+      <div class="field"><label>Flour type</label><input id="fFlour" list="flours" placeholder="e.g. bread / rye / whole wheat"></div>
+    </div>
+    <datalist id="flours"><option>Bread flour</option><option>All-purpose</option><option>Whole wheat</option><option>Rye</option><option>Spelt</option><option>50/50 bread+rye</option></datalist>
+    <div class="grid3">
+      <div class="field"><label>Feed ratio (starter:flour:water)</label><input id="fRatio" list="ratios" placeholder="1:1:1"></div>
+      <div class="field"><label>Peak rise time (h, optional)</label><input id="fPeak" type="number" step="0.5" min="0" placeholder="e.g. 6"></div>
+      <div class="field" style="display:flex;align-items:flex-end"><button class="btn primary" style="width:100%" onclick="addFeed()">+ Add feeding</button></div>
+    </div>
+    <datalist id="ratios"><option>1:1:1</option><option>1:2:2</option><option>1:3:3</option><option>1:4:4</option><option>1:5:5</option></datalist>
+    <div class="field"><label>Notes (smell, rise, surface…)</label><textarea id="fNotes" placeholder="Doubled in 6h, fruity smell, lots of bubbles…"></textarea></div>
+  </div>
+
+  <div class="card">
+    <h2>Feeding history</h2>
+    <p class="sub">Newest first · ${feeds.length} total</p>
+    ${hist}
+  </div>`;
+}
+function wireStarter(){}
+function setStorage(s){starter.storage=s;save(LS.starter,starter);render();}
+function renameStarter(){const n=prompt("Name your starter:",starter.name);if(n!=null&&n.trim()){starter.name=n.trim();save(LS.starter,starter);render();}}
+function addFeed(){
+  const at=document.getElementById("fAt").value||nowLocalInput();
+  const f={id:uid(),at,flour:document.getElementById("fFlour").value.trim(),
+    ratio:document.getElementById("fRatio").value.trim()||"1:1:1",
+    peak:document.getElementById("fPeak").value.trim(),
+    notes:document.getElementById("fNotes").value.trim()};
+  feeds.unshift(f);
+  feeds.sort((a,b)=>new Date(b.at)-new Date(a.at));
+  save(LS.feeds,feeds);render();
+}
+function delFeed(id){if(!confirm("Delete this feeding?"))return;feeds=feeds.filter(f=>f.id!==id);save(LS.feeds,feeds);render();}
+
+/* ---------- BAKES ---------- */
+let helperMode="hydration"; // hydration | water
+function bakesView(){
+  let hist=`<div class="empty">Your bake history will appear here — log your first loaf below.</div>`;
+  if(bakes.length){
+    hist="<ul class='hist'>"+bakes.map(b=>{
+      const stars=b.rating?`<span class="stars">${"★".repeat(b.rating)}${"☆".repeat(5-b.rating)}</span>`:"";
+      const meta=[
+        b.hydration?`<span>hydration <b>${esc(b.hydration)}%</b></span>`:"",
+        b.bulk?`<span>bulk <b>${esc(b.bulk)}h</b></span>`:"",
+        b.proof?`<span>proof <b>${esc(b.proof)}</b></span>`:"",
+        b.oven?`<span>oven <b>${esc(b.oven)}</b></span>`:""
+      ].filter(Boolean).join("");
+      const notes=b.notes?`<div class="notes">${esc(b.notes)}</div>`:"";
+      return `<li class="item"><div class="top">
+        <span class="when">${esc(b.recipe)||"Bake"} <span class="ago">· ${fmtDate(b.date)}</span></span>
+        <span>${stars} <button class="x" onclick="delBake('${b.id}')" title="delete">✕</button></span></div>
+        <div class="meta">${meta||'<span class="muted">no details</span>'}</div>${notes}</li>`;
+    }).join("")+"</ul>";
+  }
+
+  return `
+  ${hydrationCard()}
+
+  <div class="card">
+    <h2>Log a bake</h2>
+    <p class="sub">Capture what you did so you can repeat the wins.</p>
+    <div class="grid">
+      <div class="field"><label>Date</label><input type="date" id="bDate" value="${todayInput()}"></div>
+      <div class="field"><label>Recipe / flour</label><input id="bRecipe" placeholder="e.g. Country sourdough, 20% WW"></div>
+    </div>
+    <div class="grid3">
+      <div class="field"><label>Hydration %</label><input id="bHydration" type="number" step="1" min="0" placeholder="75"></div>
+      <div class="field"><label>Bulk ferment (h)</label><input id="bBulk" type="number" step="0.5" min="0" placeholder="5"></div>
+      <div class="field"><label>Proof time / method</label><input id="bProof" list="proofs" placeholder="overnight cold"></div>
+    </div>
+    <datalist id="proofs"><option>overnight cold (fridge)</option><option>2h room</option><option>3h room</option><option>cold 12h</option><option>cold 16h</option></datalist>
+    <div class="grid">
+      <div class="field"><label>Oven (temp / vessel)</label><input id="bOven" list="ovens" placeholder="245°C Dutch oven"></div>
+      <div class="field"><label>Result rating</label>
+        <div id="ratePick" class="stars" style="font-size:24px;cursor:pointer;padding:6px 0">${[1,2,3,4,5].map(n=>`<span data-n="${n}" onclick="pickRate(${n})">☆</span>`).join("")}</div>
+      </div>
+    </div>
+    <datalist id="ovens"><option>245°C Dutch oven</option><option>230°C Dutch oven</option><option>250°C steam + stone</option><option>220°C combo cooker</option></datalist>
+    <div class="field"><label>Crumb / notes (open crumb? gummy? scoring? ear?)</label><textarea id="bNotes" placeholder="Great ear, open crumb, slightly tight at base. Lengthen bulk next time."></textarea></div>
+    <button class="btn primary" style="width:100%" onclick="addBake()">+ Save bake</button>
+  </div>
+
+  <div class="card">
+    <h2>Bake history</h2>
+    <p class="sub">Newest first · ${bakes.length} total</p>
+    ${hist}
+  </div>
+
+  ${proCard()}`;
+}
+let pendingRate=0;
+function pickRate(n){pendingRate=n;const sp=document.querySelectorAll("#ratePick span");sp.forEach(s=>{const v=+s.dataset.n;s.textContent=v<=n?"★":"☆";});}
+function wireBakes(){}
+function addBake(){
+  const b={id:uid(),date:document.getElementById("bDate").value||todayInput(),
+    recipe:document.getElementById("bRecipe").value.trim(),
+    hydration:document.getElementById("bHydration").value.trim(),
+    bulk:document.getElementById("bBulk").value.trim(),
+    proof:document.getElementById("bProof").value.trim(),
+    oven:document.getElementById("bOven").value.trim(),
+    rating:pendingRate,
+    notes:document.getElementById("bNotes").value.trim()};
+  pendingRate=0;
+  bakes.unshift(b);
+  bakes.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  save(LS.bakes,bakes);render();
+}
+function delBake(id){if(!confirm("Delete this bake?"))return;bakes=bakes.filter(b=>b.id!==id);save(LS.bakes,bakes);render();}
+
+/* ---------- HYDRATION HELPER (free) ---------- */
+function hydrationCard(){
+  return `<div class="card helper">
+    <h2>Hydration helper</h2>
+    <p class="sub">Dough hydration = water ÷ flour. Levain/starter water counts too for total dough hydration.</p>
+    <div class="seg">
+      <button id="hmH" class="${helperMode==='hydration'?'on':''}" onclick="setHelper('hydration')">Flour + water → %</button>
+      <button id="hmW" class="${helperMode==='water'?'on':''}" onclick="setHelper('water')">Target % → water</button>
+    </div>
+    <div id="helperBody">${helperMode==="hydration"?`
+      <div class="grid">
+        <div class="field"><label>Flour (g)</label><input id="hFlour" type="number" min="0" oninput="calcHelper()" placeholder="500"></div>
+        <div class="field"><label>Water (g)</label><input id="hWater" type="number" min="0" oninput="calcHelper()" placeholder="375"></div>
+      </div>`:`
+      <div class="grid">
+        <div class="field"><label>Flour (g)</label><input id="hFlour2" type="number" min="0" oninput="calcHelper()" placeholder="500"></div>
+        <div class="field"><label>Target hydration (%)</label><input id="hTarget" type="number" min="0" oninput="calcHelper()" placeholder="75"></div>
+      </div>`}
+    </div>
+    <div class="out" id="helperOut">—</div>
+  </div>`;
+}
+function setHelper(m){helperMode=m;render();}
+function calcHelper(){
+  const out=document.getElementById("helperOut");
+  if(helperMode==="hydration"){
+    const f=+document.getElementById("hFlour").value, w=+document.getElementById("hWater").value;
+    if(f>0&&w>=0){out.textContent=(Math.round(w/f*1000)/10)+"% hydration";}
+    else out.textContent="—";
+  }else{
+    const f=+document.getElementById("hFlour2").value, t=+document.getElementById("hTarget").value;
+    if(f>0&&t>=0){out.textContent=Math.round(f*t/100)+" g water  ·  "+(Math.round((f+f*t/100))) +" g dough";}
+    else out.textContent="—";
+  }
+}
+
+/* ============================ PRO FEATURES ============================ */
+function proCard(){
+  return `<div class="card">
+    <h2>Pro tools <span class="lockTag">${pro?'✓ unlocked':'Pro'}</span></h2>
+    <p class="sub">${pro?'Thanks for going Pro — these use your real logged data.':'Unlock CSV export, bake comparison, a dough timeline calculator, and ratings stats — '+PAY.price+' USDC, one-time.'}</p>
+    <div class="row" style="margin-bottom:14px">
+      <button class="btn" onclick="exportCSV()">📤 Export CSV</button>
+      <button class="btn" onclick="showStats()">📊 Ratings stats</button>
+      <button class="btn" onclick="showCompare()">⚖️ Compare bakes</button>
+      <button class="btn" onclick="showTimeline()">⏱️ Dough timeline</button>
+    </div>
+    <div id="proOut"></div>
+    ${pro?'':`<button class="btn primary" style="width:100%" onclick="openLicense()">Unlock Pro — ${PAY.price} USDC</button>`}
+  </div>`;
+}
+
+function exportCSV(){
+  if(!pro)return openLicense();
+  const rows=[["type","date","recipe/flour","ratio","hydration","bulk_h","proof","oven","peak_h","rating","notes"]];
+  bakes.forEach(b=>rows.push(["bake",b.date,b.recipe,"",b.hydration,b.bulk,b.proof,b.oven,"",b.rating||"",b.notes]));
+  feeds.forEach(f=>rows.push(["feeding",f.at,f.flour,f.ratio,"","","","",f.peak||"","",f.notes]));
+  const csv=rows.map(r=>r.map(c=>{c=c==null?"":String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(",")).join("\n");
+  const blob=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download="sourdoughlog-export.csv";a.click();
+}
+
+function showStats(){
+  if(!pro)return openLicense();
+  const rated=bakes.filter(b=>b.rating);
+  const avg=rated.length?(rated.reduce((s,b)=>s+b.rating,0)/rated.length):0;
+  const hyd=bakes.filter(b=>+b.hydration>0);
+  const avgH=hyd.length?Math.round(hyd.reduce((s,b)=>s+ +b.hydration,0)/hyd.length):0;
+  const best=rated.slice().sort((a,b)=>b.rating-a.rating)[0];
+  // best avg rating by flour/recipe keyword
+  const byFlour={};
+  rated.forEach(b=>{const k=(b.recipe||"unnamed").trim()||"unnamed";(byFlour[k]=byFlour[k]||[]).push(b.rating);});
+  const flourRank=Object.entries(byFlour).map(([k,v])=>[k,v.reduce((s,x)=>s+x,0)/v.length,v.length]).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  // peak time avg from feeds
+  const peaks=feeds.filter(f=>+f.peak>0);
+  const avgPeak=peaks.length?(peaks.reduce((s,f)=>s+ +f.peak,0)/peaks.length):0;
+  document.getElementById("proOut").innerHTML=`
+    <div class="proGrid">
+      <div class="stat"><div class="n">${avg?avg.toFixed(1)+" ★":"—"}</div><div class="l">avg bake rating (${rated.length})</div></div>
+      <div class="stat"><div class="n">${avgH?avgH+"%":"—"}</div><div class="l">avg hydration (${hyd.length})</div></div>
+      <div class="stat"><div class="n">${bakes.length}</div><div class="l">total bakes logged</div></div>
+      <div class="stat"><div class="n">${avgPeak?avgPeak.toFixed(1)+" h":"—"}</div><div class="l">avg starter peak (${peaks.length})</div></div>
+    </div>
+    ${best?`<p class="muted small" style="margin-top:10px">🏆 Top bake: <b>${esc(best.recipe)||"Bake"}</b> (${"★".repeat(best.rating)}) on ${fmtDate(best.date)}.</p>`:""}
+    ${flourRank.length?`<p class="muted small" style="margin-top:4px">Best by recipe: ${flourRank.map(r=>esc(r[0])+" ("+r[1].toFixed(1)+"★)").join(" · ")}</p>`:""}
+    ${!bakes.length&&!feeds.length?'<p class="empty">Log some bakes and feedings to see stats.</p>':""}`;
+}
+
+function showCompare(){
+  if(!pro)return openLicense();
+  if(bakes.length<1){document.getElementById("proOut").innerHTML='<p class="empty">Log at least one bake to compare.</p>';return;}
+  const top=bakes.slice().sort((a,b)=>(b.rating||0)-(a.rating||0)).slice(0,Math.min(4,bakes.length));
+  const rows=[["Recipe","Date","Hyd %","Bulk h","Proof","Oven","Rating"]];
+  top.forEach(b=>rows.push([b.recipe||"—",fmtDate(b.date),b.hydration||"—",b.bulk||"—",b.proof||"—",b.oven||"—",b.rating?"★"+b.rating:"—"]));
+  let html='<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px">';
+  rows.forEach((r,i)=>{html+="<tr>"+r.map(c=>`<${i?"td":"th"} style="text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);${i?'color:var(--muted)':'color:var(--ink)'}">${esc(c)}</${i?"td":"th"}>`).join("")+"</tr>";});
+  html+="</table></div><p class='muted small' style='margin-top:6px'>Your top-rated bakes, side by side — spot the pattern in hydration &amp; bulk time.</p>";
+  document.getElementById("proOut").innerHTML=html;
+}
+
+function showTimeline(){
+  if(!pro)return openLicense();
+  document.getElementById("proOut").innerHTML=`
+    <p class="sub" style="margin-bottom:8px">Plan backwards from when you want bread out of the oven.</p>
+    <div class="grid3">
+      <div class="field"><label>Bake-ready time</label><input type="time" id="tlBake" value="08:00"></div>
+      <div class="field"><label>Bulk ferment (h)</label><input id="tlBulk" type="number" step="0.5" value="5"></div>
+      <div class="field"><label>Cold proof (h)</label><input id="tlProof" type="number" step="0.5" value="12"></div>
+    </div>
+    <div class="row">
+      <div class="field" style="flex:1"><label>Shape→bench rest (min)</label><input id="tlBench" type="number" value="30"></div>
+      <div class="field" style="flex:1"><label>Bake length (min)</label><input id="tlOven" type="number" value="45"></div>
+      <button class="btn primary" onclick="calcTimeline()">Calculate schedule</button>
+    </div>
+    <div id="tlOut"></div>`;
+  calcTimeline();
+}
+function calcTimeline(){
+  const bakeT=document.getElementById("tlBake").value||"08:00";
+  const bulk=+document.getElementById("tlBulk").value||0;
+  const proof=+document.getElementById("tlProof").value||0;
+  const bench=+document.getElementById("tlBench").value||0;
+  const ovenM=+document.getElementById("tlOven").value||0;
+  // anchor "bake-ready" to a reference day, work backwards
+  const [hh,mm]=bakeT.split(":").map(Number);
+  const bakeReady=new Date(); bakeReady.setHours(hh,mm,0,0);
+  const t=(d)=>d.toLocaleString(undefined,{weekday:"short",hour:"numeric",minute:"2-digit"});
+  const outOven=new Date(bakeReady.getTime()+ovenM*6e4);
+  const intoOven=bakeReady;
+  const endColdProof=new Date(intoOven); // shaped & cold-proofed loaf goes from fridge into oven
+  const shapeRest=new Date(endColdProof.getTime()-proof*3.6e6);
+  const shapeStart=new Date(shapeRest.getTime()-bench*6e4);
+  const bulkStart=new Date(shapeStart.getTime()-bulk*3.6e6);
+  const feedLevain=new Date(bulkStart.getTime()-1*3.6e6); // ~1h before mix to incorporate ripe levain
+  const steps=[
+    [feedLevain,"Mix dough with ripe levain (autolyse done)"],
+    [bulkStart,`Start bulk ferment (${bulk} h, stretch &amp; folds)`],
+    [shapeStart,"Pre-shape"],
+    [shapeRest,`Final shape, then bench rest ${bench} min`],
+    [new Date(shapeRest.getTime()+bench*6e4),`Into banneton → cold proof ${proof} h (fridge)`],
+    [intoOven,"Score &amp; bake (preheated Dutch oven)"],
+    [outOven,`Out of oven (${ovenM} min) — cool 1–2 h before slicing`]
+  ];
+  document.getElementById("tlOut").innerHTML="<ul class='tl'>"+steps.map(s=>`<li><span class="t">${t(s[0])}</span><span class="e">${s[1]}</span></li>`).join("")+"</ul>"+
+    "<p class='muted small'>Times are relative to your bake-ready clock; adjust bulk for room temperature (warmer = shorter).</p>";
+}
+
+/* ============================ BOOT ============================ */
+(async function(){
+  const saved=localStorage.getItem("sourdoughlog_license");
+  if(saved)await applyLicense(saved,true);
+  render();
+  setInterval(()=>{ if(tab==="starter")render(); },60000); // refresh "fed N ago"
+})();
+</script>
+</body>
+</html>
